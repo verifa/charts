@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "stunnel-google-ldap.fullname" . }}
+  labels:
+    {{- include "stunnel-google-ldap.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "stunnel-google-ldap.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "stunnel-google-ldap.fullname" . }}
+        {{- include "stunnel-google-ldap.selectorLabels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "stunnel-google-ldap.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "verifa/stunnel-google-ldap:{{ .Chart.AppVersion }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 1636
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 1636
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 1636
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: CERT_FILE
+              value: /etc/secrets/google/ldap-client.crt
+            - name: KEY_FILE
+              value: /etc/secrets/google/ldap-client.key
+          volumeMounts:
+            - name: {{ .Values.ldapCertSecret }}
+              mountPath: /etc/secrets/google
+              readOnly: true
+      volumes:
+        - name: {{ .Values.ldapCertSecret }}
+          secret:
+            secretName: {{ .Values.ldapCertSecret }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

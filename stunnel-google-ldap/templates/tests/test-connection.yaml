@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "stunnel-google-ldap.fullname" . }}-test-connection"
+  labels:
+    {{- include "stunnel-google-ldap.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: netcat
+      image: alpine:latest
+      command: ['nc']
+      args: ['-zv', '{{ include "stunnel-google-ldap.fullname" . }}', '{{ .Values.service.port }}']
+  restartPolicy: Never

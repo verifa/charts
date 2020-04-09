@@ -1,0 +1,3 @@
+Congrats! {{ include "stunnel-google-ldap.fullname" . }} should now be running in your cluster!
+
+To access the google ldap stunnel internally to the cluster use ldap://{{ include "stunnel-google-ldap.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}

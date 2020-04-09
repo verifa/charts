@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "stunnel-google-ldap.fullname" . }}
+  labels:
+    {{- include "stunnel-google-ldap.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 1636
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "stunnel-google-ldap.selectorLabels" . | nindent 4 }}
